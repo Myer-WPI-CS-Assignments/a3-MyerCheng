@@ -1,0 +1,69 @@
+body {
+  font-family: Arial, sans-serif;
+  color: #222;
+  background-color: #fff;
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+#grade-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+caption {
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #ccc;
+  padding: 12px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+td button {
+  margin: 2px;
+}
+
+#status {
+  min-height: 1.5em;
+}
+
+.error {
+  color: #a00000;
+}

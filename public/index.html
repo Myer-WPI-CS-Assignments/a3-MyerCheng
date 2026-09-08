@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Grade Calculator | CS4241 Assignment 2</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="js/main.js" defer></script>
+</head>
+<body>
+<h1>Grade Calculator</h1>
+<p>Enter one class and its numerical grade at a time. Edit or delete classes below.</p>
+<p>Grade scale: A: 90–100, B: 80–below 90, C: 70–below 80, NR: below 70.</p>
+
+<h2 id="form-heading">Add a class</h2>
+<form id="grade-form">
+    <div class="form-field">
+        <label for="class-name">Class name</label>
+        <input type="text" id="class-name" name="className" required>
+    </div>
+    <div class="form-field">
+        <label for="grade">Numerical grade (0–100)</label>
+        <input type="number" id="grade" name="grade" min="0" max="100" step="any" required>
+    </div>
+    <button type="submit" id="submit-button">Add class</button>
+    <button type="button" id="cancel-button" hidden>Cancel</button>
+</form>
+<p id="status">Loading classes…</p>
+
+<h2>Classes</h2>
+<p><label for="average-grade">Average grade (excluding NR):</label>
+    <output id="average-grade">—</output>
+</p>
+<p id="empty-message" hidden>No classes yet. Add a class above.</p>
+<div class="table-container">
+    <table id="grades-table">
+        <caption>All saved class grades</caption>
+        <thead>
+        <tr>
+            <th>Class</th>
+            <th>Numerical Grade</th>
+            <th>Letter Grade</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="grades-body"></tbody>
+    </table>
+</div>
+<p>Grades are kept in server memory and cleared when the server restarts.</p>
+</body>
+</html>

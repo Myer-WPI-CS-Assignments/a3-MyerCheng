@@ -1,0 +1,14 @@
+{
+  "name": "a2-myercheng",
+  "version": "1.0.0",
+  "description": "A single-page grade calculator with server-calculated letter grades.",
+  "author": "Myer Cheng",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
