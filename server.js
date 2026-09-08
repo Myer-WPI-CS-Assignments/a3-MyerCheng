@@ -1,70 +1,110 @@
-const fs = require('fs');
-const http = require('http');
+const express = require('express');
 const path = require('path');
 
-let grades = [];
+const app = express();
+const appdata = [];
 let nextId = 1;
 
-function calculateLetterGrade(grade) {
+const parseJson = express.json({limit: '16kb'});
+
+const calculateLetterGrade = (grade) => {
   if (grade >= 90) return 'A';
   if (grade >= 80) return 'B';
   if (grade >= 70) return 'C';
   return 'NR';
-}
+};
 
-async function readBody(request) {
-  let body = '';
-
-  for await (const chunk of request) {
-    body += chunk;
+const validateGrade = (request, response, next) => {
+  const data = request.body;
+  if (!data || typeof data.className !== 'string' || !data.className.trim() ||
+      !Number.isFinite(data.grade) || data.grade < 0 || data.grade > 100) {
+    return response.status(400).json({
+      error: 'Enter a class name and a numerical grade from 0 to 100.'
+    });
   }
 
-  return JSON.parse(body);
-}
+  response.locals.row = {
+    className: data.className.trim(),
+    grade: data.grade,
+    letterGrade: calculateLetterGrade(data.grade)
+  };
+  next();
+};
 
-function sendGrades(response) {
-  response.setHeader('Content-Type', 'application/json');
-  response.end(JSON.stringify(grades));
-}
-
-function sendFile(response, filename, contentType) {
-  fs.readFile(path.join(__dirname, 'public', filename), (error, file) => {
-    response.setHeader('Content-Type', contentType);
-    response.end(file);
-  });
-}
-
-const server = http.createServer(async (request, response) => {
-  if (request.method === 'GET' && request.url === '/') {
-    sendFile(response, 'index.html', 'text/html');
-  } else if (request.method === 'GET' && request.url === '/css/main.css') {
-    sendFile(response, 'css/main.css', 'text/css');
-  } else if (request.method === 'GET' && request.url === '/js/main.js') {
-    sendFile(response, 'js/main.js', 'text/javascript');
-  } else if (request.method === 'GET' && request.url === '/grades') {
-    sendGrades(response);
-  } else if (request.method === 'POST' && request.url === '/grades') {
-    const grade = await readBody(request);
-    grade.id = nextId++;
-    grade.letterGrade = calculateLetterGrade(grade.grade);
-    grades.push(grade);
-    sendGrades(response);
-  } else if (request.method === 'PUT' && request.url.startsWith('/grades/')) {
-    const id = Number(request.url.split('/')[2]);
-    const index = grades.findIndex(grade => grade.id === id);
-    const grade = await readBody(request);
-    grade.id = id;
-    grade.letterGrade = calculateLetterGrade(grade.grade);
-    grades[index] = grade;
-    sendGrades(response);
-  } else if (request.method === 'DELETE' && request.url.startsWith('/grades/')) {
-    const id = Number(request.url.split('/')[2]);
-    grades = grades.filter(grade => grade.id !== id);
-    sendGrades(response);
-  } else {
-    response.statusCode = 404;
-    response.end();
-  }
+app.use('/grades', (request, response, next) => {
+  response.set('Cache-Control', 'no-store');
+  next();
 });
 
-server.listen(process.env.PORT || 3000);
+app.param('id', (request, response, next, id) => {
+  if (!/^[1-9]\d*$/.test(id)) {
+    return response.status(404).json({error: 'Not found.'});
+  }
+  next();
+});
+
+app.route('/grades')
+    .get((request, response) => {
+      response.json(appdata);
+    })
+    .post(parseJson, validateGrade, (request, response) => {
+      appdata.push({id: nextId++, ...response.locals.row});
+      response.status(201).json(appdata);
+    })
+    .all((request, response) => {
+      response.set('Allow', 'GET, HEAD, POST');
+      response.status(405).json({error: 'Method not allowed.'});
+    });
+
+app.route('/grades/:id')
+    .put(parseJson, validateGrade, (request, response) => {
+      const index = appdata.findIndex(row => String(row.id) === request.params.id);
+      if (index === -1) {
+        return response.status(404).json({error: 'Class record not found.'});
+      }
+      appdata[index] = {id: appdata[index].id, ...response.locals.row};
+      response.json(appdata);
+    })
+    .delete((request, response) => {
+      const index = appdata.findIndex(row => String(row.id) === request.params.id);
+      if (index === -1) {
+        return response.status(404).json({error: 'Class record not found.'});
+      }
+      appdata.splice(index, 1);
+      response.json(appdata);
+    })
+    .all((request, response) => {
+      response.set('Allow', 'PUT, DELETE');
+      response.status(405).json({error: 'Method not allowed.'});
+    });
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((request, response) => {
+  response.set('Cache-Control', 'no-store');
+  response.status(404).json({error: 'Not found.'});
+});
+
+app.use((error, request, response, next) => {
+  if (response.headersSent) return next(error);
+
+  const messages = {
+    400: 'Unable to read the request.',
+    403: 'Forbidden.',
+    404: 'Not found.',
+    413: 'Request is too large.',
+    415: 'Unsupported request encoding.'
+  };
+  const status = Object.hasOwn(messages, error.status) ? error.status : 500;
+  if (status === 500) console.error(error);
+  const message = error.type === 'entity.parse.failed' ? 'Invalid JSON.' :
+      messages[status] || 'Internal server error.';
+  response.set('Cache-Control', 'no-store');
+  response.status(status).json({error: message});
+});
+
+if (require.main === module) {
+  app.listen(process.env.PORT || 3000);
+}
+
+module.exports = app;
