@@ -24,7 +24,6 @@ const setLoggedOut = message => {
   appPanel.hidden = true;
   loginPanel.hidden = false;
   loginStatus.textContent = message;
-  loginStatus.className = message ? 'error' : '';
   loginForm.elements.username.focus();
 };
 
@@ -87,7 +86,7 @@ const renderGrades = rows => {
       if (saved) className.focus();
     });
 
-    actions.append(editButton, deleteButton);
+    actions.append(editButton, ' ', deleteButton);
     tr.append(actions);
     tableBody.append(tr);
   });
@@ -96,7 +95,6 @@ const renderGrades = rows => {
 const requestGrades = async (url, options, message) => {
   appPanel.querySelectorAll('input, textarea, button').forEach(control => control.disabled = true);
   statusMessage.textContent = 'Loading classes…';
-  statusMessage.className = '';
   try {
     renderGrades(await requestJson(url, options));
     statusMessage.textContent = message;
@@ -106,7 +104,6 @@ const requestGrades = async (url, options, message) => {
       setLoggedOut('Your session ended. Please log in again.');
     } else {
       statusMessage.textContent = 'Could not update the display. ' + error.message;
-      statusMessage.className = 'error';
     }
     return false;
   } finally {
@@ -118,7 +115,6 @@ loginForm.addEventListener('submit', async event => {
   event.preventDefault();
   loginForm.querySelectorAll('input, button').forEach(control => control.disabled = true);
   loginStatus.textContent = 'Logging in…';
-  loginStatus.className = '';
   try {
     const result = await requestJson('/auth/login', {
       method: 'POST',
@@ -133,7 +129,6 @@ loginForm.addEventListener('submit', async event => {
     await requestGrades('/grades', {method: 'GET'}, result.created ? 'Account created. Add your first class.' : 'Classes loaded.');
   } catch (error) {
     loginStatus.textContent = error.message;
-    loginStatus.className = 'error';
   } finally {
     loginForm.querySelectorAll('input, button').forEach(control => control.disabled = false);
   }
@@ -149,7 +144,6 @@ document.getElementById('logout-button').addEventListener('click', async () => {
     if (error.status === 401) setLoggedOut('Your session ended. Please log in again.');
     else {
       statusMessage.textContent = error.message;
-      statusMessage.className = 'error';
     }
   }
 });
