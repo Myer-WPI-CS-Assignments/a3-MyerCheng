@@ -1,3 +1,7 @@
+const loginPanel = document.getElementById('login-panel');
+const loginForm = document.getElementById('login-form');
+const loginStatus = document.getElementById('login-status');
+const appPanel = document.getElementById('app-panel');
 const form = document.getElementById('grade-form');
 const className = document.getElementById('class-name');
 const grade = document.getElementById('grade');
@@ -8,6 +12,27 @@ const statusMessage = document.getElementById('status');
 const tableBody = document.getElementById('grades-body');
 let editingId = null;
 
+const setLoggedIn = username => {
+  document.getElementById('current-user').textContent = username;
+  loginPanel.hidden = true;
+  appPanel.hidden = false;
+};
+
+const setLoggedOut = message => {
+  appPanel.hidden = true;
+  loginPanel.hidden = false;
+  loginStatus.textContent = message;
+  loginStatus.className = message ? 'error' : '';
+  loginForm.elements.username.focus();
+};
+
+const requestJson = async (url, options) => {
+  const response = await fetch(url, options);
+  const body = response.status === 204 ? null : await response.json();
+  if (!response.ok) throw Object.assign(new Error(body?.error || 'Request failed.'), {status: response.status});
+  return body;
+};
+
 const resetForm = () => {
   form.reset();
   editingId = null;
@@ -16,7 +41,7 @@ const resetForm = () => {
   cancelButton.hidden = true;
 };
 
-const renderGrades = (rows) => {
+const renderGrades = rows => {
   const eligibleRows = rows.filter(row => row.letterGrade !== 'NR');
   document.getElementById('average-grade').textContent = eligibleRows.length
       ? (eligibleRows.reduce((sum, row) => sum + row.grade, 0) / eligibleRows.length).toFixed(2)
@@ -64,34 +89,68 @@ const renderGrades = (rows) => {
 };
 
 const requestGrades = async (url, options, message) => {
-  document.querySelectorAll('input, button').forEach(control => control.disabled = true);
+  appPanel.querySelectorAll('input, button').forEach(control => control.disabled = true);
   statusMessage.textContent = 'Loading classes…';
   statusMessage.className = '';
   try {
-    const response = await fetch(url, options);
-    const rows = await response.json();
-    if (!response.ok) throw new Error(rows.error);
-    renderGrades(rows);
+    renderGrades(await requestJson(url, options));
     statusMessage.textContent = message;
     return true;
   } catch (error) {
-    statusMessage.textContent = 'Could not update the display. ' + error.message + ' Reload to fetch the current server data.';
-    statusMessage.className = 'error';
+    if (error.status === 401) {
+      setLoggedOut('Your session ended. Please log in again.');
+    } else {
+      statusMessage.textContent = 'Could not update the display. ' + error.message;
+      statusMessage.className = 'error';
+    }
     return false;
   } finally {
-    document.querySelectorAll('input, button').forEach(control => control.disabled = false);
+    appPanel.querySelectorAll('input, button').forEach(control => control.disabled = false);
   }
 };
 
+loginForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  loginForm.querySelectorAll('input, button').forEach(control => control.disabled = true);
+  loginStatus.textContent = 'Logging in…';
+  loginStatus.className = '';
+  try {
+    const result = await requestJson('/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: loginForm.elements.username.value,
+        password: loginForm.elements.password.value
+      })
+    });
+    loginForm.reset();
+    setLoggedIn(result.username);
+    await requestGrades('/grades', {method: 'GET'}, result.created ? 'Account created. Add your first class.' : 'Classes loaded.');
+  } catch (error) {
+    loginStatus.textContent = error.message;
+    loginStatus.className = 'error';
+  } finally {
+    loginForm.querySelectorAll('input, button').forEach(control => control.disabled = false);
+  }
+});
+
+document.getElementById('logout-button').addEventListener('click', async () => {
+  try {
+    await requestJson('/auth/logout', {method: 'POST'});
+    resetForm();
+    tableBody.replaceChildren();
+    setLoggedOut('');
+  } catch (error) {
+    if (error.status === 401) setLoggedOut('Your session ended. Please log in again.');
+    else {
+      statusMessage.textContent = error.message;
+      statusMessage.className = 'error';
+    }
+  }
+});
+
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  if (!className.value.trim()) {
-    statusMessage.textContent = 'Enter a class name.';
-    statusMessage.className = 'error';
-    className.focus();
-    return;
-  }
-
   const saved = await requestGrades(editingId === null ? '/grades' : '/grades/' + editingId, {
     method: editingId === null ? 'POST' : 'PUT',
     headers: {'Content-Type': 'application/json'},
@@ -108,4 +167,7 @@ cancelButton.addEventListener('click', () => {
   className.focus();
 });
 
-requestGrades('/grades', {method: 'GET'}, 'Classes loaded.');
+requestJson('/auth/me').then(async ({username}) => {
+  setLoggedIn(username);
+  await requestGrades('/grades', {method: 'GET'}, 'Classes loaded.');
+}).catch(error => setLoggedOut(error.status === 401 ? '' : 'Could not connect to the server.'));

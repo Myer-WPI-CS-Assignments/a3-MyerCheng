@@ -1,51 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Grade Calculator | CS4241 Assignment 2</title>
+    <title>Grade Calculator</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Save and manage class grades with a private account.">
     <link rel="stylesheet" href="css/main.css">
     <script src="js/main.js" defer></script>
 </head>
 <body>
-<h1>Grade Calculator</h1>
-<p>Enter one class and its numerical grade at a time. Edit or delete classes below.</p>
-<p>Grade scale: A: 90–100, B: 80–below 90, C: 70–below 80, NR: below 70.</p>
+<header>
+    <h1>Grade Calculator</h1>
+</header>
 
-<h2 id="form-heading">Add a class</h2>
-<form id="grade-form">
-    <div class="form-field">
-        <label for="class-name">Class name</label>
-        <input type="text" id="class-name" name="className" required>
-    </div>
-    <div class="form-field">
-        <label for="grade">Numerical grade (0–100)</label>
-        <input type="number" id="grade" name="grade" min="0" max="100" step="any" required>
-    </div>
-    <button type="submit" id="submit-button">Add class</button>
-    <button type="button" id="cancel-button" hidden>Cancel</button>
-</form>
-<p id="status">Loading classes…</p>
+<main>
+    <section id="login-panel" aria-labelledby="login-heading">
+        <h2 id="login-heading">Log in</h2>
+        <p>Enter an existing account, or choose a new username to create one automatically.</p>
+        <form id="login-form">
+            <div class="form-field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" minlength="3" maxlength="32"
+                       pattern="[A-Za-z0-9_-]+" autocomplete="username" required>
+            </div>
+            <div class="form-field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" minlength="8" maxlength="128"
+                       autocomplete="current-password" required>
+            </div>
+            <button type="submit">Log in or create account</button>
+        </form>
+        <p id="login-status" role="status"></p>
+    </section>
 
-<h2>Classes</h2>
-<p><label for="average-grade">Average grade (excluding NR):</label>
-    <output id="average-grade">—</output>
-</p>
-<p id="empty-message" hidden>No classes yet. Add a class above.</p>
-<div class="table-container">
-    <table id="grades-table">
-        <caption>All saved class grades</caption>
-        <thead>
-        <tr>
-            <th>Class</th>
-            <th>Numerical Grade</th>
-            <th>Letter Grade</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody id="grades-body"></tbody>
-    </table>
-</div>
-<p>Grades are kept in server memory and cleared when the server restarts.</p>
+    <section id="app-panel" hidden>
+        <p>Logged in as <strong id="current-user"></strong>.</p>
+        <button type="button" id="logout-button">Log out</button>
+        <p>Enter one class and its numerical grade at a time. Edit or delete classes below.</p>
+        <p>Grade scale: A: 90–100, B: 80–below 90, C: 70–below 80, NR: below 70.</p>
+
+        <h2 id="form-heading">Add a class</h2>
+        <form id="grade-form">
+            <div class="form-field">
+                <label for="class-name">Class name</label>
+                <input type="text" id="class-name" name="className" required>
+            </div>
+            <div class="form-field">
+                <label for="grade">Numerical grade (0–100)</label>
+                <input type="number" id="grade" name="grade" min="0" max="100" step="any" required>
+            </div>
+            <button type="submit" id="submit-button">Add class</button>
+            <button type="button" id="cancel-button" hidden>Cancel</button>
+        </form>
+        <p id="status" role="status">Loading classes…</p>
+
+        <h2>Classes</h2>
+        <p><label for="average-grade">Average grade (excluding NR):</label>
+            <output id="average-grade">—</output>
+        </p>
+        <p id="empty-message" hidden>No classes yet. Add a class above.</p>
+        <div class="table-container">
+            <table id="grades-table">
+                <caption>All saved class grades for this account</caption>
+                <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Numerical Grade</th>
+                    <th>Letter Grade</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="grades-body"></tbody>
+            </table>
+        </div>
+        <p>Grades are saved privately between server restarts.</p>
+    </section>
+</main>
 </body>
 </html>
