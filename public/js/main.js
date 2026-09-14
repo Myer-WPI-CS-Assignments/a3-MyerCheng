@@ -5,6 +5,8 @@ const appPanel = document.getElementById('app-panel');
 const form = document.getElementById('grade-form');
 const className = document.getElementById('class-name');
 const grade = document.getElementById('grade');
+const notes = document.getElementById('notes');
+const includeInAverage = document.getElementById('include-in-average');
 const heading = document.getElementById('form-heading');
 const submitButton = document.getElementById('submit-button');
 const cancelButton = document.getElementById('cancel-button');
@@ -42,7 +44,7 @@ const resetForm = () => {
 };
 
 const renderGrades = rows => {
-  const eligibleRows = rows.filter(row => row.letterGrade !== 'NR');
+  const eligibleRows = rows.filter(row => row.includeInAverage);
   document.getElementById('average-grade').textContent = eligibleRows.length
       ? (eligibleRows.reduce((sum, row) => sum + row.grade, 0) / eligibleRows.length).toFixed(2)
       : '—';
@@ -51,9 +53,10 @@ const renderGrades = rows => {
 
   rows.forEach(row => {
     const tr = document.createElement('tr');
-    [row.className, row.grade, row.letterGrade].forEach(value => {
+    [row.className, row.grade, row.letterGrade, row.notes || '—', row.includeInAverage ? 'Yes' : 'No'].forEach((value, index) => {
       const cell = document.createElement('td');
       cell.textContent = value;
+      if (index === 3) cell.className = 'notes';
       tr.append(cell);
     });
 
@@ -66,6 +69,8 @@ const renderGrades = rows => {
       editingId = row.id;
       className.value = row.className;
       grade.value = row.grade;
+      notes.value = row.notes;
+      includeInAverage.checked = row.includeInAverage;
       heading.textContent = 'Edit a class';
       submitButton.textContent = 'Save';
       cancelButton.hidden = false;
@@ -89,7 +94,7 @@ const renderGrades = rows => {
 };
 
 const requestGrades = async (url, options, message) => {
-  appPanel.querySelectorAll('input, button').forEach(control => control.disabled = true);
+  appPanel.querySelectorAll('input, textarea, button').forEach(control => control.disabled = true);
   statusMessage.textContent = 'Loading classes…';
   statusMessage.className = '';
   try {
@@ -105,7 +110,7 @@ const requestGrades = async (url, options, message) => {
     }
     return false;
   } finally {
-    appPanel.querySelectorAll('input, button').forEach(control => control.disabled = false);
+    appPanel.querySelectorAll('input, textarea, button').forEach(control => control.disabled = false);
   }
 };
 
@@ -154,7 +159,12 @@ form.addEventListener('submit', async event => {
   const saved = await requestGrades(editingId === null ? '/grades' : '/grades/' + editingId, {
     method: editingId === null ? 'POST' : 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({className: className.value.trim(), grade: grade.valueAsNumber})
+    body: JSON.stringify({
+      className: className.value.trim(),
+      grade: grade.valueAsNumber,
+      notes: notes.value,
+      includeInAverage: includeInAverage.checked
+    })
   }, editingId === null ? 'Class added.' : 'Class updated.');
   if (saved) {
     resetForm();

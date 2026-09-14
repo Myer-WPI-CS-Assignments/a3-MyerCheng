@@ -21,9 +21,17 @@ body {
 }
 
 input,
+textarea,
 button {
   font: inherit;
   padding: 8px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 8px;
 }
 
 button {
@@ -40,6 +48,7 @@ button:disabled {
 
 table {
   border-collapse: collapse;
+  min-width: 700px;
   width: 100%;
 }
 
@@ -58,6 +67,10 @@ td {
 
 td button {
   margin: 2px;
+}
+
+.notes {
+  white-space: pre-wrap;
 }
 
 #status {

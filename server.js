@@ -2,8 +2,8 @@ const crypto = require('node:crypto');
 const {promisify} = require('node:util');
 const express = require('express');
 const {MongoClient, ObjectId} = require('mongodb');
-require('dotenv').config();
 
+require('dotenv').config();
 const app = express();
 const scrypt = promisify(crypto.scrypt);
 const SESSION_AGE_SECONDS = 7 * 24 * 60 * 60;
@@ -16,13 +16,21 @@ const httpError = (status, message) => Object.assign(new Error(message), {status
 const makeGrade = body => {
   const className = typeof body?.className === 'string' ? body.className.trim() : '';
   const grade = body?.grade;
+  const notes = typeof body?.notes === 'string' ? body.notes.trim() : '';
+  const includeInAverage = body?.includeInAverage === undefined ? true : body.includeInAverage;
   if (!className || typeof grade !== 'number' || !Number.isFinite(grade) || grade < 0 || grade > 100) {
     throw httpError(400, 'A class name and numerical grade from 0 to 100 are required.');
   }
+  if ((body?.notes !== undefined && typeof body.notes !== 'string') || body?.notes?.length > 500) {
+    throw httpError(400, 'Notes must be no more than 500 characters.');
+  }
+  if (typeof includeInAverage !== 'boolean') throw httpError(400, 'Include in average must be true or false.');
   return {
     className,
     grade,
-    letterGrade: grade >= 90 ? 'A' : grade >= 80 ? 'B' : grade >= 70 ? 'C' : 'NR'
+    letterGrade: grade >= 90 ? 'A' : grade >= 80 ? 'B' : grade >= 70 ? 'C' : 'NR',
+    notes,
+    includeInAverage
   };
 };
 
@@ -68,7 +76,12 @@ const requireUser = async (request, response, next) => {
 };
 
 const listGrades = async userId => (await grades.find({userId}).sort({_id: 1}).toArray())
-    .map(({_id, userId: omitted, ...grade}) => ({...grade, id: _id.toString()}));
+    .map(({_id, userId: omitted, ...grade}) => ({
+      notes: '',
+      includeInAverage: true,
+      ...grade,
+      id: _id.toString()
+    }));
 
 app.set('trust proxy', 1);
 app.use(express.json({limit: '10kb'}));
