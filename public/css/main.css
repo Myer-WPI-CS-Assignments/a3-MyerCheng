@@ -1,82 +1,21 @@
-body {
-  font-family: Arial, sans-serif;
-  color: #222;
-  background-color: #fff;
-  max-width: 900px;
-  margin: 24px auto;
-  padding: 0 16px;
+:root {
+  --color-link: #005fcc;
+  --color-table: #005fcc;
 }
 
-#grade-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-input,
-textarea,
-button {
-  font: inherit;
-  padding: 8px;
-}
-
-.checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-bottom: 8px;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: wait;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-table {
-  border-collapse: collapse;
-  min-width: 700px;
-  width: 100%;
-}
-
-caption {
-  text-align: left;
-  margin-bottom: 8px;
-}
-
-th,
-td {
-  border-bottom: 1px solid #ccc;
-  padding: 12px;
-  text-align: left;
-  overflow-wrap: anywhere;
-}
-
-td button {
-  margin: 2px;
+@media (prefers-color-scheme: dark) {
+  :root[color-mode="user"] {
+    --color-link: #63b3ed;
+    --color-table: #63b3ed;
+  }
 }
 
 .notes {
   white-space: pre-wrap;
 }
 
-#status {
-  min-height: 1.5em;
-}
-
-.error {
-  color: #a00000;
+#submit-button {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
 }
