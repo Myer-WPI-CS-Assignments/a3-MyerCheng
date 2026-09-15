@@ -1,6 +1,6 @@
 ## Personal Gradebook
 
-[https://a3-myercheng.onrender.com]
+https://a3-myercheng.onrender.com
 
 This application allows you to input your grades and stores them in persistent storage. 
 The grading scale/technique is based on WPI grading, but may not 100% reflect WPI grading policy. 
